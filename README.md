@@ -45,12 +45,30 @@ iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -s 10.66.0.0/16
 ```
 auto eth0
 iface eth0 inet static
-	address 10.66.3.3
+	address 10.66.4.3
+	netmask 255.255.255.0
+	gateway 10.66.4.1
+  up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+### Fritz (DNS Server)
+```
+auto eth0
+iface eth0 inet static
+	address 10.66.4.2
+	netmask 255.255.255.0
+	gateway 10.66.4.1
+  up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+### Warhammer (Database Server)
+```
+auto eth0
+iface eth0 inet static
+	address 10.66.3.4
 	netmask 255.255.255.0
 	gateway 10.66.3.1
   up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
-### Fritz (DNS Server)
+### Beast (Load Balancer Laravel)
 ```
 auto eth0
 iface eth0 inet static
@@ -59,31 +77,13 @@ iface eth0 inet static
 	gateway 10.66.3.1
   up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
-### Warhammer (Database Server)
-```
-auto eth0
-iface eth0 inet static
-	address 10.66.2.4
-	netmask 255.255.255.0
-	gateway 10.66.2.1
-  up echo nameserver 192.168.122.1 > /etc/resolv.conf
-```
-### Beast (Load Balancer Laravel)
-```
-auto eth0
-iface eth0 inet static
-	address 10.66.2.2
-	netmask 255.255.255.0
-	gateway 10.66.2.1
-  up echo nameserver 192.168.122.1 > /etc/resolv.conf
-```
 ### Colossal (Load Balancer PHP)
 ```
 auto eth0
 iface eth0 inet static
-	address 10.66.2.3
+	address 10.66.3.3
 	netmask 255.255.255.0
-	gateway 10.66.2.1
+	gateway 10.66.3.1
   up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 ### Annie (Laravel Worker)
@@ -117,27 +117,27 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-	address 10.66.4.2
+	address 10.66.2.2
 	netmask 255.255.255.0
-	gateway 10.66.4.1
+	gateway 10.66.2.1
   up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 ### Eren (PHP Worker)
 ```
 auto eth0
 iface eth0 inet static
-	address 10.66.4.3
+	address 10.66.2.3
 	netmask 255.255.255.0
-	gateway 10.66.4.1
+	gateway 10.66.2.1
   up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 ### Mikasa (PHP Worker)
 ```
 auto eth0
 iface eth0 inet static
-	address 10.66.4.4
+	address 10.66.2.4
 	netmask 255.255.255.0
-	gateway 10.66.4.1
+	gateway 10.66.2.1
   up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 ### Zeke & Erwin (Client)
@@ -147,6 +147,7 @@ iface eth0 inet dhcp
 ```
 ## Soal 0
 Perang antara kaum Marley dan Eldia telah mencapai puncak. Kaum Marley yang dipimpin oleh Zeke, me-register domain name **marley.yyy.com** untuk worker Laravel mengarah pada **Annie**. Namun ternyata tidak hanya kaum Marley saja yang berinisiasi, kaum Eldia ternyata sudah mendaftarkan domain name **eldia.yyy.com** untuk worker PHP (0) mengarah pada **Armin**.
+
 ### Setup DNS pada Fritz (DNS Server)
 a. Instalasi dependencies yang diperlukan dan jalankan pada ```/root/.bashrc```
 ```
@@ -192,11 +193,60 @@ echo'$TTL    604800
                         604800 )		; Negative Cache TTL
 ;
 @		IN      NS      eldia.it05.com.
-@		IN      A       10.66.4.2 ; IP Vladimir
+@		IN      A       10.66.2.2 ; IP Armin
 www		IN      CNAME   eldia.it05.com.' > /etc/bind/it05/eldia.it05.com
 
 service bind9 restart
 ```
+
+## Soal 1
+Semua Client harus menggunakan konfigurasi ip address dari keluarga Tybur (dhcp)
+
+### Setup DHCP Server (Tybur)
+a. Instalasi dependencies yang diperlukan
+```
+apt-get update
+apt-get install isc-dhcp-server -y
+service isc-dhcp-server start
+```
+b. Buat script `tybur.bashrc`
+```
+echo 'INTERFACES="eth0"' > /etc/default/isc-dhcp-server
+
+echo 'subnet 10.66.1.0 netmask 255.255.255.0 {
+	option routers 10.66.1.0;
+	option broadcast-address 10.66.1.255;
+	option domain-name-servers 10.66.4.2; #IP DNS Server
+}
+subnet 10.66.2.0 netmask 255.255.255.0 {
+	option routers 10.66.2.0;
+	option broadcast-address 10.66.2.255;
+	option domain-name-servers 10.66.4.2; #IP DNS Server
+}
+
+subnet 10.66.3.0 netmask 255.255.255.0 {}
+
+subnet 10.66.4.0 netmask 255.255.255.0 {}' > /etc/dhcp/dhcpd.conf
+```
+
+### Setup DHCP Relay (Paradis)
+a. Instalasi dependencies yang diperlukan
+```
+apt-get update
+apt-get install isc-dhcp-relay -y
+service isc-dhcp-relay start
+```
+b. Buat script `paradis.bashrc`
+```
+echo 'SERVERS="10.66.4.3" # IP DHCP Server
+INTERFACES="eth1 eth2 eth3 eth4"
+OPTIONS=""' > /etc/default/isc-dhcp-relay
+
+echo 'net.ipv4.ip_forward=1' > /etc/sysctl.conf
+
+service isc-dhcp-relay restart
+```
+
 
 
 
