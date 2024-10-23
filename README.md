@@ -247,6 +247,27 @@ echo 'net.ipv4.ip_forward=1' > /etc/sysctl.conf
 service isc-dhcp-relay restart
 ```
 
+## Soal 2 & 3
+Client yang melalui bangsa **marley** mendapatkan range IP dari [prefix IP].1.05 - [prefix IP].1.25 dan [prefix IP].1.50 - [prefix IP].1.100. Sedangkan Client yang melalui bangsa **eldia** mendapatkan range IP dari [prefix IP].2.09 - [prefix IP].2.27 dan [prefix IP].2.81 - [prefix IP].2.243 
 
+### Setup DHCP Server
+Edit konfigurasi `subnet 10.66.1.0` dan `10.66.2.0` pada file `tybur.bashrc` menjadi seperti berikut:
+```
+subnet 10.66.1.0 netmask 255.255.255.0 {
+	range 10.66.1.05 10.66.1.25;
+	range 10.66.1.50 10.66.1.100;
+	option routers 10.66.1.0;
+	option broadcast-address 10.66.1.255;
+}
+subnet 10.66.2.0 netmask 255.255.255.0 {
+	range 10.66.2.09 10.66.2.27;
+	range 10.66.2.81 10.66.2.243;
+	option routers 10.66.2.0;
+	option broadcast-address 10.66.2.255;
+}
+```
 
+### Testing
+<img width="636" alt="image" src="https://github.com/user-attachments/assets/5fe780fd-ae48-4448-9e72-2832e23d21d8">
+<img width="635" alt="image" src="https://github.com/user-attachments/assets/a082f13b-28a1-4952-8cc4-bfbdbb8be5f7">
 
