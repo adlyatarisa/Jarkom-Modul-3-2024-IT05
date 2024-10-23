@@ -145,6 +145,58 @@ iface eth0 inet static
 auto eth0
 iface eth0 inet dhcp
 ```
+## Soal 0
+Perang antara kaum Marley dan Eldia telah mencapai puncak. Kaum Marley yang dipimpin oleh Zeke, me-register domain name **marley.yyy.com** untuk worker Laravel mengarah pada **Annie**. Namun ternyata tidak hanya kaum Marley saja yang berinisiasi, kaum Eldia ternyata sudah mendaftarkan domain name **eldia.yyy.com** untuk worker PHP (0) mengarah pada **Armin**.
+### Setup DNS pada Fritz (DNS Server)
+a. Instalasi dependencies yang diperlukan dan jalankan pada ```/root/.bashrc```
+```
+apt-get update
+apt-get install bind9 -y
+service bind9 start
+```
+b. Buat script pada ```fritz.bashrc```
+```
+# Buat domain
+echo 'zone "marley.it05.com" {
+ 	type master;
+ 	file "/etc/bind/it05/marley.it05.com";
+};
+
+zone "eldia.it05.com" {
+ 	type master;
+ 	file "/etc/bind/it05/eldia.it05.com";
+};' > /etc/bind/named.conf.local
+
+mkdir /etc/bind/it05
+
+# config domain marley
+echo '$TTL    604800
+@       IN      SOA     marley.it05.com. marley.it05.com. (
+                        2			; Serial
+                        604800			; Refresh
+                        86400			; Retry
+                        2419200         	; Expire
+                        604800 )		; Negative Cache TTL
+;
+@		IN      NS      marley.it05.com.
+@		IN      A       10.66.1.2 ; IP Annie
+www		IN      CNAME   marley.it05.com.' > /etc/bind/it05/marley.it05.com
+
+# config domain eldia
+echo'$TTL    604800
+@       IN      SOA     eldia.it05.com. eldia.it05.com. (
+                        2			; Serial
+                        604800			; Refresh
+                        86400			; Retry
+                        2419200         	; Expire
+                        604800 )		; Negative Cache TTL
+;
+@		IN      NS      eldia.it05.com.
+@		IN      A       10.66.4.2 ; IP Vladimir
+www		IN      CNAME   eldia.it05.com.' > /etc/bind/it05/eldia.it05.com
+
+service bind9 restart
+```
 
 
 
