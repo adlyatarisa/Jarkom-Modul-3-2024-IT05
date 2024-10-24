@@ -6,7 +6,7 @@
 | Furqon Aryadana | 5027231024 |
 
 ## Topologi
-<img width="827" alt="image" src="https://github.com/user-attachments/assets/832ba78f-ce3f-405d-937f-13da6265e0d8">
+<img width="577" alt="image" src="https://github.com/user-attachments/assets/adebc9ac-18fd-48f2-bfa7-3b326291015d">
 
 
 ## Network Configuration
@@ -157,6 +157,23 @@ service bind9 start
 ```
 b. Buat script pada ```fritz.bashrc```
 ```
+forward="options {
+	listen-on-v6 { none; };
+	directory "/var/cache/bind";
+
+	forwarders {
+  	   192.168.122.1;
+	};
+
+	forward only;
+	dnssec-validation no;
+
+	auth-nxdomain no;
+	allow-query{ any; };
+};"
+
+echo "$forward" > /etc/bind/named.conf.options
+
 # Buat domain
 echo 'zone "marley.it05.com" {
  	type master;
@@ -172,7 +189,7 @@ mkdir /etc/bind/it05
 
 # config domain marley
 echo '$TTL    604800
-@       IN      SOA     marley.it05.com. marley.it05.com. (
+@       IN      SOA     marley.it05.com. root.marley.it05.com. (
                         2			; Serial
                         604800			; Refresh
                         86400			; Retry
@@ -185,7 +202,7 @@ www		IN      CNAME   marley.it05.com.' > /etc/bind/it05/marley.it05.com
 
 # config domain eldia
 echo'$TTL    604800
-@       IN      SOA     eldia.it05.com. eldia.it05.com. (
+@       IN      SOA     eldia.it05.com. root.eldia.it05.com. (
                         2			; Serial
                         604800			; Refresh
                         86400			; Retry
@@ -270,4 +287,33 @@ subnet 10.66.2.0 netmask 255.255.255.0 {
 ### Testing
 <img width="636" alt="image" src="https://github.com/user-attachments/assets/5fe780fd-ae48-4448-9e72-2832e23d21d8">
 <img width="635" alt="image" src="https://github.com/user-attachments/assets/a082f13b-28a1-4952-8cc4-bfbdbb8be5f7">
+
+## Soal 4
+Client mendapatkan DNS dari keluarga Fritz dan dapat terhubung dengan internet melalui DNS tersebut
+
+### Setup DHCP Server (Tybur)
+Edit konfigurasi `subnet 10.66.1.0` dan `10.66.2.0` pada file `tybur.bashrc` menjadi seperti berikut:
+```
+subnet 10.66.1.0 netmask 255.255.255.0 {
+	range 10.66.1.05 10.66.1.25;
+	range 10.66.1.50 10.66.1.100;
+	option routers 10.66.1.0;
+	option broadcast-address 10.66.1.255;
+	option domain-name-servers 10.66.4.2; # IP Fritz (DNS Server)
+}
+subnet 10.66.2.0 netmask 255.255.255.0 {
+	range 10.66.2.09 10.66.2.27;
+	range 10.66.2.81 10.66.2.243;
+	option routers 10.66.2.0;
+	option broadcast-address 10.66.2.255;
+	option domain-name-servers 10.66.4.2; # IP Fritz (DNS Server)
+}
+```
+
+### Testing
+coba ping domain dari client
+<img width="590" alt="image" src="https://github.com/user-attachments/assets/9b0cb4a3-b148-4614-95d1-5343ef6ed8eb">
+
+<img width="576" alt="image" src="https://github.com/user-attachments/assets/9b9d92e0-b896-4b07-afad-6773853a8a14">
+
 
