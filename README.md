@@ -220,7 +220,7 @@ service bind9 restart
 Semua Client harus menggunakan konfigurasi ip address dari keluarga Tybur (dhcp)
 
 ### Setup DHCP Server (Tybur)
-a. Instalasi dependencies yang diperlukan
+a. Instalasi dependencies yang diperlukan pada ```/root/.bashrc```
 ```
 apt-get update
 apt-get install isc-dhcp-server -y
@@ -247,7 +247,7 @@ subnet 10.66.4.0 netmask 255.255.255.0 {}' > /etc/dhcp/dhcpd.conf
 ```
 
 ### Setup DHCP Relay (Paradis)
-a. Instalasi dependencies yang diperlukan
+a. Instalasi dependencies yang diperlukan pada ```/root/.bashrc```
 ```
 apt-get update
 apt-get install isc-dhcp-relay -y
@@ -315,5 +315,45 @@ coba ping domain dari client
 <img width="590" alt="image" src="https://github.com/user-attachments/assets/9b0cb4a3-b148-4614-95d1-5343ef6ed8eb">
 
 <img width="576" alt="image" src="https://github.com/user-attachments/assets/9b9d92e0-b896-4b07-afad-6773853a8a14">
+
+## Soal 5
+Dikarenakan keluarga Tybur tidak menyukai kaum eldia, maka mereka hanya meminjamkan ip address ke kaum eldia selama **6 menit**. Namun untuk kaum marley, keluarga Tybur meminjamkan ip address selama **30 menit**. Waktu maksimal dialokasikan untuk peminjaman alamat IP selama **87 menit**.
+
+### Setup DHCP Server (Tybur)
+Edit konfigurasi `subnet 10.66.1.0` dan `10.66.2.0` pada file `tybur.bashrc` menjadi seperti berikut:
+```
+# Kaum Marley
+subnet 10.66.1.0 netmask 255.255.255.0 {
+	range 10.66.1.05 10.66.1.25;
+	range 10.66.1.50 10.66.1.100;
+	option routers 10.66.1.0;
+	option broadcast-address 10.66.1.255;
+	option domain-name-servers 10.66.4.2; # IP Fritz (DNS Server)
+	default-lease-time 1800;
+	max-lease-time 5220;
+}
+
+# Kaum Eldia
+subnet 10.66.2.0 netmask 255.255.255.0 {
+	range 10.66.2.09 10.66.2.27;
+	range 10.66.2.81 10.66.2.243;
+	option routers 10.66.2.0;
+	option broadcast-address 10.66.2.255;
+	option domain-name-servers 10.66.4.2; # IP Fritz (DNS Server)
+	default-lease-time 360;
+	max-lease-time 5220;
+}
+```
+
+### Testing
+Restart lalu buka web console pada client
+
+a. Kaum Marley
+<img width="565" alt="image" src="https://github.com/user-attachments/assets/5347ff5c-11aa-4b16-9c70-cec988ddb3f6">
+
+b. Kaum Eldia
+<img width="581" alt="image" src="https://github.com/user-attachments/assets/f1e53f69-af9f-4d3b-b7fc-53c20b639e2b">
+
+
 
 
