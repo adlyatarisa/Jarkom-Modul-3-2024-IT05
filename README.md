@@ -312,6 +312,7 @@ subnet 10.66.2.0 netmask 255.255.255.0 {
 
 ### Testing
 coba ping domain dari client
+
 <img width="590" alt="image" src="https://github.com/user-attachments/assets/9b0cb4a3-b148-4614-95d1-5343ef6ed8eb">
 
 <img width="576" alt="image" src="https://github.com/user-attachments/assets/9b9d92e0-b896-4b07-afad-6773853a8a14">
@@ -484,4 +485,15 @@ service php7.3-fpm restart
 ```
 ab -n 6000 -c 200 http://10.66.3.3/
 ```
+
+<img width="671" alt="image" src="https://github.com/user-attachments/assets/804bfc78-a582-428e-98e2-b400ea840df2">
+
 <img width="675" alt="image" src="https://github.com/user-attachments/assets/4432a655-9201-4403-a82a-e28904c8eb48">
+
+## Soal 8
+Karena Erwin meminta “laporan kerja Armin”, maka dari itu buatlah analisis hasil testing dengan 1000 request dan 75 request/second untuk masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
+- Nama Algoritma Load Balancer
+- Report hasil testing pada Apache Benchmark
+- Grafik request per second untuk masing masing algoritma. 
+- Analisis
+
