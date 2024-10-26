@@ -359,7 +359,7 @@ b. Kaum Eldia
 ## Soal 6
 Armin berinisiasi untuk memerintahkan setiap worker PHP untuk melakukan konfigurasi virtual host untuk website berikut https://intip.in/BangsaEldia dengan menggunakan php 7.3
 
-### Setup PHP Worker (Armin, Eren, Mikasa
+### Setup PHP Worker (Armin, Eren, Mikasa)
 
 a. Instalasi dependencies yang diperlukan pada ```/root/.bashrc```
 ```
@@ -426,3 +426,62 @@ lynx 10.66.2.4
 ```
 <img width="731" alt="image" src="https://github.com/user-attachments/assets/812809c3-595a-4bf0-906a-ac10491dc94c">
 
+## Soal 7
+Dikarenakan Armin sudah mendapatkan kekuatan titan colossal, maka bantulah kaum **eldia** menggunakan **colossal** agar dapat bekerja sama dengan baik. Kemudian lakukan testing dengan 6000 request dan 200 request/second.
+
+### Setup Load Balancer (Colossal)
+a. Instalasi dependencies yang diperlukan pada ```/root/.bashrc```
+```
+apt-get update
+apt-get install lynx nginx wget unzip php7.3 php-fpm -y
+apt-get install apache2-utils -y
+```
+
+b. Buat script `armin.bashrc`, `eren.bashrc`, `mikasa.bashrc`
+```
+# jalankan seervice php dan nginx
+service php7.3-fpm start
+service nginx start
+
+# tambahkan configurasi sites-available
+echo 'upstream worker {
+	# least_conn;
+	# ip_hash;
+	# hash $request_uri consistent;
+	# random two least_conn;
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+}
+
+server {
+	listen 80;
+
+	root /var/www/html;
+
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		# Soal 10
+		auth_basic "Restricted Content";
+		auth_basic_user_file /etc/nginx/supersecret/htpasswd;
+		proxy_pass http://worker;
+	}
+}' > /etc/nginx/sites-available/lb-it05.conf
+
+ln -s /etc/nginx/sites-available/lb-it05.conf /etc/nginx/sites-enabled
+
+rm /etc/nginx/sites-enabled/default
+
+# restart service php dan nginx
+service nginx restart
+service php7.3-fpm restart
+```
+
+### Testing
+```
+ab -n 6000 -c 200 http://10.66.3.3/
+```
+<img width="675" alt="image" src="https://github.com/user-attachments/assets/4432a655-9201-4403-a82a-e28904c8eb48">
