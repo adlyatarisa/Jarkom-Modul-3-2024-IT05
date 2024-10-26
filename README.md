@@ -349,11 +349,80 @@ subnet 10.66.2.0 netmask 255.255.255.0 {
 Restart lalu buka web console pada client
 
 a. Kaum Marley
+
 <img width="565" alt="image" src="https://github.com/user-attachments/assets/5347ff5c-11aa-4b16-9c70-cec988ddb3f6">
 
 b. Kaum Eldia
+
 <img width="581" alt="image" src="https://github.com/user-attachments/assets/f1e53f69-af9f-4d3b-b7fc-53c20b639e2b">
 
+## Soal 6
+Armin berinisiasi untuk memerintahkan setiap worker PHP untuk melakukan konfigurasi virtual host untuk website berikut https://intip.in/BangsaEldia dengan menggunakan php 7.3
 
+### Setup PHP Worker (Armin, Eren, Mikasa
 
+a. Instalasi dependencies yang diperlukan pada ```/root/.bashrc```
+```
+apt-get update
+apt-get install lynx nginx wget unzip php7.3 php-fpm -y
+```
+
+b. Buat script `armin.bashrc`, `eren.bashrc`, `mikasa.bashrc`
+```
+# jalankan seervice php dan nginx
+service php7.3-fpm start
+service nginx start
+
+# download resource website
+wget --no-check-certificate 'https://drive.google.com/uc?export=download&id=1WhVXL6AejH-onwYpMClA6c_7WpQjY0Pr' -O /var/www/html/modul-3.zip
+unzip /var/www/html/modul-3.zip -d /var/www/html/
+mv /var/www/html/modul-3/* /var/www/html/
+rm -r /var/www/html/modul-3
+
+# tambahkan configurasi sites-available
+echo 'server {
+	listen 80;
+
+	root /var/www/html;
+
+	index index.php index.html index.htm;
+
+	server_name _;
+
+	location / {
+		try_files \$uri \$uri/ /index.php?\$query_string;
+	}
+
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+	}
+
+	error_log /var/log/nginx/jarkom-it05_error.log;
+	access_log /var/log/nginx/jarkom-it05_access.log;
+}' > /etc/nginx/sites-available/jarkom-it05.conf
+
+ln -s /etc/nginx/sites-available/jarkom-it05.conf /etc/nginx/sites-enabled
+
+rm /etc/nginx/sites-enabled/default
+
+# restart service php dan nginx
+service nginx restart
+service php7.3-fpm restart
+```
+### Testing
+```
+lynx 10.66.2.1
+```
+<img width="798" alt="image" src="https://github.com/user-attachments/assets/7b063828-1f65-44a6-b085-6b77e336a935">
+
+```
+lynx 10.66.2.3
+```
+<img width="729" alt="image" src="https://github.com/user-attachments/assets/01b6ed6a-7169-435a-a259-2d926584ed98">
+
+```
+lynx 10.66.2.4
+```
+<img width="731" alt="image" src="https://github.com/user-attachments/assets/812809c3-595a-4bf0-906a-ac10491dc94c">
 
