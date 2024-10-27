@@ -610,23 +610,68 @@ Kesimpulan:
 - **Pilihan Menengah**: Weighted Round Robin dan Least Connection menunjukkan performa yang baik untuk lingkungan dengan distribusi beban yang bervariasi.
 - **Performa Terendah**: Round Robin memiliki performa yang paling rendah, lebih cocok untuk aplikasi dengan server yang kapasitasnya hampir sama.
 
+## Soal 9
+Dengan menggunakan algoritma **Least-Connection**, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak **1000 request** dengan **10 request/second**, kemudian tambahkan grafiknya pada “laporan kerja Armin”.
+
+### Penyelesaian
+a. Ubah konfigurasi upstream worker pada `/etc/nginx/sites-available/lb-it05.conf` dengan algoritma least connection, sesuaikan jumlah worker dengan jumlah yang ingin dilakukan testing
+   ```
+   upstream worker {
+  	least_conn;
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+   }
+   ```
+b. Restart service nginx dan php-fpm
+```
+service nginx restart
+service php7.3-fpm restart
+```
+
+### Testing
+Lakukan load testing dengan Apache Benchmark pada IP load balancer (Colossal)
+```
+ab -n 1000 -c 10 http://10.66.3.3/
+```
+- 3 Worker
+  
+  <img width="673" alt="image" src="https://github.com/user-attachments/assets/a6df1ab0-8938-4f13-93d1-562f077a16a1">
+
+- 2 Worker
+  
+  <img width="667" alt="image" src="https://github.com/user-attachments/assets/f947d1c9-516a-46d0-b971-a638002e54b7">
+
+- 1 Worker
+  
+  <img width="663" alt="image" src="https://github.com/user-attachments/assets/30795a25-4ce6-49bf-ae5c-a8c6c66092fb">
+
+### Grafik RPS
+<img width="503" alt="image" src="https://github.com/user-attachments/assets/2bbb6949-29b7-46de-8fc0-74ebc4ef15ba">
+
+### Analisis
+
+a. 3 Worker
+- **Request per second**: 2914.67
+- **Time per second (Mean)**: 3.431 ms
+- **Max time**: 60 ms
+- **Analisis**: Dengan 3 worker, sistem mencapai RPS tinggi dan waktu respons cepat, meskipun ada beberapa permintaan yang memiliki waktu koneksi dan pemrosesan lebih lama (maksimum 60 ms). Dengan distribusi beban pada 3 worker, efisiensi meningkat karena permintaan yang besar dibagi rata, mengurangi beban pada tiap worker.
+
+b. 2 Worker
+- **Request per second**: 2803.12
+- **Time per second (Mean)**: 3.567 ms
+- **Max time**: 15 ms
+- **Analisis**: Menggunakan 2 worker menunjukkan penurunan kecil dalam RPS dan peningkatan waktu rata-rata per permintaan dibandingkan dengan 3 worker. Namun, waktu terlama untuk permintaan lebih singkat (maksimum 15 ms). Ini menunjukkan bahwa dengan dua worker, sistem cenderung lebih stabil, tetapi kinerja secara keseluruhan sedikit berkurang.
 
 
+c. 1 Worker
+- **Request per second**: 2958.98
+- **Time per second (Mean)**: 3.380 ms
+- **Max time**: 25 ms
+- **Analisis**: Dengan hanya satu worker, RPS meningkat sedikit dibandingkan dengan 2 worker. Namun, waktu terlama untuk satu permintaan meningkat menjadi 25 ms. Hal ini mungkin disebabkan oleh satu worker yang harus menangani semua permintaan sendiri, yang dapat membuat waktu pemrosesan lebih fluktuatif meskipun pada rata-rata permintaan lebih cepat.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Kesimpulan:
+- **Efisiensi Maksimal**: Konfigurasi dengan 3 worker memberikan hasil yang paling stabil dengan jumlah permintaan per detik yang tinggi dan distribusi beban yang lebih merata, meskipun ada beberapa permintaan yang mencapai waktu koneksi dan pemrosesan lebih lama.
+- **Stabilitas Baik**: 2 worker menawarkan performa yang stabil dengan waktu maksimal lebih rendah (15 ms), tetapi pada RPS sedikit lebih rendah dibandingkan 1 dan 3 worker.
+- **RPS Tertinggi**: 1 worker memberikan RPS tertinggi, tetapi waktu maksimum lebih tinggi dibandingkan 2 worker, menunjukkan beban yang kurang merata di bawah satu worker.
   
