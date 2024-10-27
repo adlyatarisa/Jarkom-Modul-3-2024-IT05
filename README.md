@@ -855,5 +855,8 @@ lynx 10.66.3.3
 <img width="728" alt="image" src="https://github.com/user-attachments/assets/100a703b-3ba7-4587-898f-4a5b18a0ac8b">
 
 
+## Soal 13
+Karena mengetahui bahwa ada keturunan marley yang mewarisi kekuatan titan, Zeke pun berinisiatif untuk menyimpan data data penting di Warhammer, dan semua data tersebut harus dapat diakses oleh anak buah kesayangannya, Annie, Reiner, dan Berthold.
+
 
 
