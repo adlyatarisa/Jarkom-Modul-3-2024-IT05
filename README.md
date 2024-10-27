@@ -438,7 +438,7 @@ apt-get install lynx nginx wget unzip php7.3 php-fpm -y
 apt-get install apache2-utils -y
 ```
 
-b. Buat script `armin.bashrc`, `eren.bashrc`, `mikasa.bashrc`
+b. Buat script `colossal.bashrc`
 ```
 # jalankan seervice php dan nginx
 service php7.3-fpm start
@@ -446,10 +446,6 @@ service nginx start
 
 # tambahkan configurasi sites-available
 echo 'upstream worker {
-	# least_conn;
-	# ip_hash;
-	# hash $request_uri consistent;
-	# random two least_conn;
 	server 10.66.2.2; # IP Armin
 	server 10.66.2.3; # IP Eren
 	server 10.66.2.4; # IP Mikasa
@@ -491,9 +487,146 @@ ab -n 6000 -c 200 http://10.66.3.3/
 <img width="675" alt="image" src="https://github.com/user-attachments/assets/4432a655-9201-4403-a82a-e28904c8eb48">
 
 ## Soal 8
-Karena Erwin meminta “laporan kerja Armin”, maka dari itu buatlah analisis hasil testing dengan 1000 request dan 75 request/second untuk masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
+Karena Erwin meminta “laporan kerja Armin”, maka dari itu buatlah analisis hasil testing dengan **1000 request** dan **75 request/second** untuk masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
 - Nama Algoritma Load Balancer
 - Report hasil testing pada Apache Benchmark
 - Grafik request per second untuk masing masing algoritma. 
 - Analisis
 
+### Penyelesaian
+a. Ubah konfigurasi upstream worker pada `/etc/nginx/sites-available/lb-it05.conf` berdasarkan algoritma yang diinginkan
+- Round Robin
+  ```
+  upstream worker {
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+  }
+  ```
+- Weighted Round Robin
+  ```
+  upstream worker {
+	server 10.66.2.2 weight=4; # IP Armin
+	server 10.66.2.3 weight=2; # IP Eren
+	server 10.66.2.4 weight=1; # IP Mikasa
+  }
+  ```
+- Least Connection
+  ```
+  upstream worker {
+  	least_conn;
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+  }
+  ```
+- IP Hash
+  ```
+  upstream worker {
+  	ip_hash;
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+  }
+  ```
+- Generic Hash
+  ```
+  upstream worker {
+  	hash $request_uri consistent;
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+  }
+  ```
+b. Restart service nginx dan php-fpm
+```
+service nginx restart
+service php7.3-fpm restart
+```
+
+### Testing
+Lakukan load testing dengan Apache Benchmark pada IP load balancer (Colossal)
+```
+ab -n 1000 -c 75 http://10.66.3.3/
+```
+a. Round Robin
+
+<img width="672" alt="image" src="https://github.com/user-attachments/assets/933660ee-b46b-430a-8e05-0f752b5ac217">
+
+b. Weighted Round Robin
+
+<img width="682" alt="image" src="https://github.com/user-attachments/assets/cdd45f84-a3e7-4fc7-b636-017a97fa5399">
+
+c. Least Connection
+
+<img width="671" alt="image" src="https://github.com/user-attachments/assets/a3b83f77-824e-458f-bae1-44ad928c9337">
+
+d. IP Hash
+
+<img width="673" alt="image" src="https://github.com/user-attachments/assets/ac0e8495-a1cd-4e13-b7c2-6bba09e48c8c">
+
+e. Generic Hash
+
+<img width="670" alt="image" src="https://github.com/user-attachments/assets/9ff00cc8-1b36-4544-b08e-ceb285fc87bd">
+
+### Grafik Request Per Second masing-masing algoritma
+
+<img width="521" alt="image" src="https://github.com/user-attachments/assets/da140f38-7068-4585-86c4-2efc3b72d0d0">
+
+### Analisis
+
+a. Round Robin
+- **Request per second**: 1691.17
+- **Time per second (Mean)**: 44.348 ms
+- **Max time**: 130 ms
+- **Analisis**: Round Robin menunjukkan performa yang cukup stabil, tetapi memiliki RPS terendah di antara algoritma lainnya. Distribusi yang tidak mempertimbangkan beban membuat algoritma ini kurang efisien dalam menangani jumlah permintaan yang besar.
+
+b. Weighted Round Robin
+- **Request per second**: 2543.14
+- **Time per second (Mean)**: 29.491 ms
+- **Max time**: 119 ms
+- **Analisis**: Weighted Round Robin mendistribusikan lebih banyak permintaan ke server yang memiliki kapasitas lebih tinggi, menghasilkan peningkatan performa yang signifikan dibandingkan Round Robin standar. Algoritma ini mengurangi rata-rata waktu per permintaan dan memiliki RPS yang lebih tinggi, menjadikannya lebih efektif dalam lingkungan yang memiliki server dengan kapasitas yang berbeda.
+
+c. Least Connection
+- **Request per second**: 2483.15
+- **Time per second (Mean)**: 30.204 ms
+- **Max time**: 52 ms
+- **Analisis**: Least Connection mengarahkan permintaan ke server dengan koneksi paling sedikit, sehingga meminimalkan kemungkinan adanya server yang kelebihan beban. Performanya mendekati Weighted Round Robin, dengan waktu permintaan maksimal yang lebih rendah. Algoritma ini cocok untuk aplikasi yang membutuhkan distribusi koneksi yang merata untuk menghindari penundaan.
+
+d. IP Hash
+- **Request per second**: 2106.82
+- **Time per second (Mean)**: 35.599 ms
+- **Max time**: 87 ms
+- **Analisis**:  IP Hash mendistribusikan permintaan berdasarkan alamat IP klien, memberikan sesi yang konsisten bagi pengguna. Namun, performanya berada di bawah Weighted Round Robin dan Least Connection, meskipun lebih tinggi dari Round Robin. Algoritma ini lebih cocok untuk aplikasi yang membutuhkan session persistence, meskipun efisiensi dalam load balancing tidak setinggi algoritma lain.
+
+e. Generic Hash
+- **Request per second**: 2954.79
+- **Time per second (Mean)**: 25.382 ms
+- **Max time**: 79 ms
+- **Analisis**:  Generic Hash memberikan hasil RPS tertinggi, menunjukkan bahwa algoritma ini paling efisien dalam mendistribusikan beban secara merata dan cepat. Dengan rata-rata waktu per permintaan yang terendah dan waktu permintaan maksimal yang lebih pendek, algoritma ini adalah yang paling optimal untuk menangani volume permintaan tinggi.
+
+Kesimpulan:
+- **Performa Tertinggi**: Generic Hash memberikan RPS tertinggi dan waktu per permintaan terendah, menjadikannya pilihan terbaik untuk skenario yang membutuhkan performa maksimal.
+- **Pilihan Menengah**: Weighted Round Robin dan Least Connection menunjukkan performa yang baik untuk lingkungan dengan distribusi beban yang bervariasi.
+- **Performa Terendah**: Round Robin memiliki performa yang paling rendah, lebih cocok untuk aplikasi dengan server yang kapasitasnya hampir sama.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
