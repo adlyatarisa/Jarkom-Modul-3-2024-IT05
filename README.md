@@ -327,7 +327,7 @@ Edit konfigurasi `subnet 10.66.1.0` dan `10.66.2.0` pada file `tybur.bashrc` men
 subnet 10.66.1.0 netmask 255.255.255.0 {
 	range 10.66.1.05 10.66.1.25;
 	range 10.66.1.50 10.66.1.100;
-	option routers 10.66.1.0;
+	option routers 10.66.1.1;
 	option broadcast-address 10.66.1.255;
 	option domain-name-servers 10.66.4.2; # IP Fritz (DNS Server)
 	default-lease-time 1800;
@@ -338,7 +338,7 @@ subnet 10.66.1.0 netmask 255.255.255.0 {
 subnet 10.66.2.0 netmask 255.255.255.0 {
 	range 10.66.2.09 10.66.2.27;
 	range 10.66.2.81 10.66.2.243;
-	option routers 10.66.2.0;
+	option routers 10.66.2.1;
 	option broadcast-address 10.66.2.255;
 	option domain-name-servers 10.66.4.2; # IP Fritz (DNS Server)
 	default-lease-time 360;
@@ -771,4 +771,58 @@ lynx 10.66.3.3/titan
 <img width="734" alt="image" src="https://github.com/user-attachments/assets/041d435f-4ad3-4ce6-8791-3302a82b6f38">
 
 
+## Soal 12
+Selanjutnya Colossal ini hanya boleh diakses oleh client dengan IP [Prefix IP].1.77, [Prefix IP].1.88, [Prefix IP].2.144, dan [Prefix IP].2.156.
+
+### Setup Load Balancer (Colossal)
+a. Ubah konfigurasi `server` pada `/etc/nginx/sites-available/lb-it05.conf` 
+   ```
+   server {
+	listen 80;
+
+	root /var/www/html;
+
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		allow 10.66.1.77;
+		allow 10.66.1.88;
+		allow 10.66.2.144;
+		allow 10.66.2.156;
+		deny all;
+
+		auth_basic "Restricted Content"; # konfigurasi autentikasi
+        	auth_basic_user_file /etc/nginx/supersecret/htpasswd; # konfigurasi autentikasi
+		proxy_pass http://worker;
+	}
+
+  	location /titan {
+		auth_basic "Restricted Content"; # konfigurasi autentikasi
+        	auth_basic_user_file /etc/nginx/supersecret/htpasswd; # konfigurasi autentikasi
+		proxy_pass https://attackontitan.fandom.com/wiki/Attack_on_Titan_Wiki;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+   }
+   ```
+b. Restart service nginx dan php-fpm
+```
+service nginx restart
+service php7.3-fpm restart
+```
+
+### Testing
+```
+lynx 10.66.3.3
+```
+- Erwin
+  
+<img width="747" alt="image" src="https://github.com/user-attachments/assets/54cc5f7e-db51-4e02-bdef-80ce703b42c0">
+
+- Zeke
+
+<img width="728" alt="image" src="https://github.com/user-attachments/assets/100a703b-3ba7-4587-898f-4a5b18a0ac8b">
 
