@@ -461,9 +461,6 @@ server {
 	server_name _;
 
 	location / {
-		# Soal 10
-		auth_basic "Restricted Content";
-		auth_basic_user_file /etc/nginx/supersecret/htpasswd;
 		proxy_pass http://worker;
 	}
 }' > /etc/nginx/sites-available/lb-it05.conf
@@ -494,7 +491,7 @@ Karena Erwin meminta “laporan kerja Armin”, maka dari itu buatlah analisis h
 - Analisis
 
 ### Penyelesaian
-a. Ubah konfigurasi upstream worker pada `/etc/nginx/sites-available/lb-it05.conf` berdasarkan algoritma yang diinginkan
+a. Ubah konfigurasi `upstream worker` pada `/etc/nginx/sites-available/lb-it05.conf` berdasarkan algoritma yang diinginkan
 - Round Robin
   ```
   upstream worker {
@@ -614,7 +611,7 @@ Kesimpulan:
 Dengan menggunakan algoritma **Least-Connection**, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak **1000 request** dengan **10 request/second**, kemudian tambahkan grafiknya pada “laporan kerja Armin”.
 
 ### Penyelesaian
-a. Ubah konfigurasi upstream worker pada `/etc/nginx/sites-available/lb-it05.conf` dengan algoritma least connection, sesuaikan jumlah worker dengan jumlah yang ingin dilakukan testing
+a. Ubah konfigurasi `upstream worker` pada `/etc/nginx/sites-available/lb-it05.conf` dengan algoritma least connection, sesuaikan jumlah worker dengan jumlah yang ingin dilakukan testing
    ```
    upstream worker {
   	least_conn;
@@ -675,3 +672,103 @@ Kesimpulan:
 - **Stabilitas Baik**: 2 worker menawarkan performa yang stabil dengan waktu maksimal lebih rendah (15 ms), tetapi pada RPS sedikit lebih rendah dibandingkan 1 dan 3 worker.
 - **RPS Tertinggi**: 1 worker memberikan RPS tertinggi, tetapi waktu maksimum lebih tinggi dibandingkan 2 worker, menunjukkan beban yang kurang merata di bawah satu worker.
   
+## Soal 10
+Selanjutnya coba tambahkan keamanan dengan konfigurasi autentikasi di Colossal dengan dengan kombinasi username: “arminannie” dan password: “jrkmyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/supersecret/
+
+### Setup Load Balancer (Colossal)
+Modifikasi script `colossal.bashrc`
+```
+# jalankan service php dan nginx
+service php7.3-fpm start
+service nginx start
+
+# username dan password
+mkdir -p /etc/nginx/supersecret
+htpasswd -cb /etc/nginx/supersecret/htpasswd arminannie jrkmit05
+
+# tambahkan configurasi sites-available
+echo 'upstream worker {
+	server 10.66.2.2; # IP Armin
+	server 10.66.2.3; # IP Eren
+	server 10.66.2.4; # IP Mikasa
+}
+
+server {
+	listen 80;
+
+	root /var/www/html;
+
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		auth_basic "Restricted Content"; # konfigurasi autentikasi
+        	auth_basic_user_file /etc/nginx/supersecret/htpasswd; # konfigurasi autentikasi
+		proxy_pass http://worker;
+	}
+}' > /etc/nginx/sites-available/lb-it05.conf
+
+ln -s /etc/nginx/sites-available/lb-it05.conf /etc/nginx/sites-enabled
+
+rm /etc/nginx/sites-enabled/default
+
+# restart service php dan nginx
+service nginx restart
+service php7.3-fpm restart
+```
+
+### Testing
+<img width="589" alt="image" src="https://github.com/user-attachments/assets/070a02dc-8b3d-4d61-ae9f-f3e842ec6e87">
+
+<img width="647" alt="image" src="https://github.com/user-attachments/assets/f6df7812-daca-43ae-83b4-922905802a6d">
+
+<img width="422" alt="image" src="https://github.com/user-attachments/assets/f8776444-19ef-4d06-9467-e62bcf4ed3ba">
+
+<img width="685" alt="image" src="https://github.com/user-attachments/assets/462b550c-cd05-401e-83e8-f1c3934767d1">
+
+## Soal 11
+Lalu buat untuk setiap request yang mengandung /titan akan di proxy passing menuju halaman https://attackontitan.fandom.com/wiki/Attack_on_Titan_Wiki
+
+### Setup Load Balancer (Colossal)
+a. Ubah konfigurasi `server` pada `/etc/nginx/sites-available/lb-it05.conf` 
+   ```
+   server {
+	listen 80;
+
+	root /var/www/html;
+
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		auth_basic "Restricted Content"; # konfigurasi autentikasi
+        	auth_basic_user_file /etc/nginx/supersecret/htpasswd; # konfigurasi autentikasi
+		proxy_pass http://worker;
+	}
+
+  	location /titan {
+		auth_basic "Restricted Content"; # konfigurasi autentikasi
+        	auth_basic_user_file /etc/nginx/supersecret/htpasswd; # konfigurasi autentikasi
+		proxy_pass https://attackontitan.fandom.com/wiki/Attack_on_Titan_Wiki;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+   }
+   ```
+b. Restart service nginx dan php-fpm
+```
+service nginx restart
+service php7.3-fpm restart
+```
+
+### Testing
+```
+lynx 10.66.3.3/titan
+```
+<img width="734" alt="image" src="https://github.com/user-attachments/assets/041d435f-4ad3-4ce6-8791-3302a82b6f38">
+
+
+
