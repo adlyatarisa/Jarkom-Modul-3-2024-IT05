@@ -826,3 +826,18 @@ lynx 10.66.3.3
 
 <img width="728" alt="image" src="https://github.com/user-attachments/assets/100a703b-3ba7-4587-898f-4a5b18a0ac8b">
 
+### Fix IP Client
+modifikasi network configuration pada node Erwin
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether 22:5d:5c:a6:9e:8b # MAC Address
+```
+Tambahkan konfigurasi berikut pada `/etc/dhcp/dhcpd.conf` di DHCP Server 
+```
+host Erwin {
+    hardware ethernet 22:5d:5c:a6:9e:8b;
+    fixed-address 10.66.2.144;
+    option host-name "Erwin";
+}
+```
