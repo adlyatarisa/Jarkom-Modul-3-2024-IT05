@@ -841,3 +841,19 @@ host Erwin {
     option host-name "Erwin";
 }
 ```
+
+### Testing
+```
+lynx 10.66.3.3
+```
+- Erwin
+
+<img width="726" alt="image" src="https://github.com/user-attachments/assets/b2d8933a-3572-4a0a-8c8d-55976f070e5f">
+
+- Zeke
+
+<img width="728" alt="image" src="https://github.com/user-attachments/assets/100a703b-3ba7-4587-898f-4a5b18a0ac8b">
+
+
+
+
