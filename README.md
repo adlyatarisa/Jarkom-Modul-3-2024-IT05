@@ -413,7 +413,7 @@ service php7.3-fpm restart
 ```
 ### Testing
 ```
-lynx 10.66.2.1
+lynx 10.66.2.2
 ```
 <img width="798" alt="image" src="https://github.com/user-attachments/assets/7b063828-1f65-44a6-b085-6b77e336a935">
 
